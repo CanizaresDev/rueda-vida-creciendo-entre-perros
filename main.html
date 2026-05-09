@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>La Rueda de la Vida del Perro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --cream:#FAF6EE;
+    --cream-deep:#EFE8D7;
+    --paper:#FFFCF4;
+    --mint:#7FBFAE;
+    --mint-dark:#5FA694;
+    --mint-soft:#B8DCD2;
+    --coral:#ED9079;
+    --coral-dark:#D77559;
+    --coral-soft:#F5C2B0;
+    --sand:#D7C9A8;
+    --ink:#3A3A3A;
+    --ink-soft:#6B6555;
+    --grid:#D8D4CC;
+    --line:#CDC8BB;
+  }
+  *{ box-sizing:border-box; }
+  html, body{
+    margin:0; padding:0;
+    background: var(--cream-deep);
+    font-family:'Nunito', system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+  body{
+    background:
+      radial-gradient(circle at 12% 8%, rgba(127,191,174,0.18), transparent 30%),
+      radial-gradient(circle at 88% 92%, rgba(237,144,121,0.16), transparent 32%),
+      var(--cream-deep);
+    min-height:100vh;
+  }
+  .app{
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 14px 12px 130px;
+  }
+
+  /* ===== CARD (downloaded artifact) ===== */
+  .card{
+    background: var(--paper);
+    border-radius: 14px;
+    padding: 14px 14px 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative top/bottom borders — original geometric pattern */
+  .deco{
+    height: 22px;
+    display:flex;
+    justify-content: space-around;
+    align-items:flex-end;
+    padding: 0 4px;
+    overflow:hidden;
+  }
+  .deco.bottom{ align-items: flex-start; transform: scaleY(-1); }
+  .deco i{ display:inline-block; }
+  .d-arc{ width:14px; height:7px; border-radius: 14px 14px 0 0; }
+  .d-dot{ width:8px; height:8px; border-radius:50%; }
+  .d-half{ width:14px; height:7px; border-radius: 14px 14px 0 0; }
+  .d-leaf{ width:10px; height:14px; border-radius: 50% 50% 0 50%; transform: rotate(-30deg); }
+  .d-tri{ width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom: 9px solid; }
+
+  .title{
+    font-family:'Patrick Hand', cursive;
+    text-align:center;
+    font-size: 26px;
+    line-height: 1.05;
+    letter-spacing: 0.5px;
+    margin: 8px 6px 2px;
+    color: var(--ink);
+  }
+  .title .small{
+    display:block;
+    font-size:14px;
+    letter-spacing:3px;
+    color: var(--mint-dark);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    font-family:'Nunito', sans-serif;
+    font-weight:700;
+  }
+
+  /* ===== Radar chart ===== */
+  .chart-wrap{
+    width:100%;
+    margin: 0 auto;
+    position: relative;
+  }
+  svg.radar{
+    width:100%;
+    height:auto;
+    display:block;
+    overflow: visible;
+    touch-action: manipulation;
+  }
+  .grid-circle{ fill:none; stroke: var(--grid); stroke-width: 0.6; }
+  .grid-circle.alt{ fill: rgba(127,191,174,0.04); }
+  .grid-outer{ fill:none; stroke: var(--mint); stroke-width: 1.2; }
+  .axis{ stroke: var(--mint); stroke-width: 0.9; opacity: 0.85; }
+  .axis-cross{ stroke: var(--mint); stroke-width: 0.9; opacity: 0.85; }
+  .data-poly{
+    fill: rgba(237,144,121,0.22);
+    stroke: var(--coral);
+    stroke-width: 2.4;
+    stroke-linejoin: round;
+  }
+  .data-dot{
+    fill: var(--coral);
+    stroke: #fff;
+    stroke-width: 2;
+  }
+  .scale-num{
+    font-family:'Nunito', sans-serif;
+    font-size: 11px;
+    font-weight:700;
+    fill: var(--mint-dark);
+  }
+  .cat-label{
+    font-family:'Patrick Hand', cursive;
+    font-size: 15px;
+    letter-spacing: 1.4px;
+    fill: var(--mint-dark);
+    cursor: pointer;
+    user-select:none;
+    font-weight: 400;
+  }
+  .cat-label.active{ fill: var(--coral-dark); }
+  .cat-hit{ fill: rgba(0,0,0,0); cursor: pointer; }
+
+  /* Tap badge — small "tap to edit" hint that doesn't appear in download */
+  .edit-hint{
+    text-align:center;
+    font-size: 12px;
+    color: var(--coral-dark);
+    margin: 4px 0 8px;
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  /* ===== Form ===== */
+  .form{
+    margin-top: 10px;
+    padding: 0 4px;
+  }
+  .form-row{
+    display:flex;
+    gap: 6px;
+    align-items: center;
+    border-bottom: 1.2px solid var(--line);
+    padding: 6px 2px 4px;
+    min-height: 32px;
+  }
+  .form-row label{
+    flex-shrink: 0;
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    font-weight: 400;
+  }
+  .form-row .input{
+    flex:1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family:'Patrick Hand', cursive;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--ink);
+    width: 100%;
+    padding: 0;
+  }
+  .form-row .input::placeholder{
+    color: #c7bfae;
+    font-style: italic;
+  }
+  /* date input styling */
+  input[type="date"].input{
+    font-family:'Patrick Hand', cursive;
+    font-size: 18px;
+    color: var(--ink);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator{
+    opacity: 0.55;
+    cursor: pointer;
+  }
+  .notes{
+    margin-top: 10px;
+  }
+  .notes label{
+    display:block;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .notes-input{
+    width:100%;
+    min-height: 72px;
+    border: none;
+    outline:none;
+    font-family:'Patrick Hand', cursive;
+    font-size: 16px;
+    color: var(--ink);
+    padding: 0;
+    line-height: 24px;
+    background:
+      repeating-linear-gradient(to bottom,
+        transparent 0,
+        transparent 23px,
+        var(--line) 23px,
+        var(--line) 24px);
+    resize: vertical;
+  }
+  .notes-input::placeholder{ color:#c7bfae; font-style:italic; }
+
+  /* ===== Action bar ===== */
+  .actions{
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--cream-deep) 65%, rgba(239,232,215,0));
+    display:flex;
+    gap: 10px;
+    justify-content: center;
+    z-index: 50;
+  }
+  .actions-inner{
+    width:100%;
+    max-width: 480px;
+    display:flex;
+    gap: 10px;
+  }
+  .btn{
+    flex: 1;
+    background: var(--coral);
+    color: #fff;
+    border: none;
+    padding: 14px 18px;
+    border-radius: 999px;
+    font-family:'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(237,144,121,0.4);
+    transition: transform 0.12s;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn[disabled]{ opacity: 0.6; cursor: progress; }
+  .btn.alt{
+    flex: 0 0 auto;
+    width: 52px;
+    padding: 14px 0;
+    background: var(--mint);
+    box-shadow: 0 6px 16px rgba(127,191,174,0.4);
+    font-size: 18px;
+  }
+
+  /* ===== Modal ===== */
+  .modal-bg{
+    position: fixed;
+    inset: 0;
+    background: rgba(58,58,58,0.55);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.18s ease-out;
+  }
+  .modal-bg.open{ display:flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal{
+    background: var(--paper);
+    border-radius: 22px 22px 0 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 18px 22px 26px;
+    animation: slideUp 0.26s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .handle{
+    width: 42px;
+    height: 4px;
+    background: var(--grid);
+    border-radius: 3px;
+    margin: 0 auto 14px;
+  }
+  .modal h2{
+    font-family:'Patrick Hand', cursive;
+    margin: 0 0 6px;
+    color: var(--mint-dark);
+    font-size: 26px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .modal .desc{
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .modal .measures{
+    margin: 0 0 12px;
+  }
+  .modal .measures b{
+    color: var(--mint-dark);
+    font-weight: 700;
+  }
+  .modal .ranges{
+    list-style: none;
+    padding: 0;
+    margin: 0 0 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .modal .ranges li{
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 10px;
+    background: var(--cream);
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+  .modal .ranges .rg{
+    flex-shrink: 0;
+    background: #fff;
+    border: 1.5px solid var(--coral-soft);
+    color: var(--coral-dark);
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    min-width: 38px;
+    text-align: center;
+    margin-top: 1px;
+  }
+  .value-row{
+    display:flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--cream);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .value-row .num{
+    font-family:'Patrick Hand', cursive;
+    font-size: 56px;
+    color: var(--coral);
+    line-height: 0.9;
+    width: 64px;
+    text-align: center;
+  }
+  .value-row .info{
+    flex:1;
+  }
+  .value-row .info .lbl{
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+  .stepper{
+    display:flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .stepper button{
+    width: 46px; height: 46px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: none;
+    background: var(--coral);
+    color: #fff;
+    font-size: 26px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    box-shadow: 0 3px 10px rgba(237,144,121,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .stepper button:active{ transform: scale(0.94); background: var(--coral-dark); }
+  .slider-wrap{ padding: 0 4px; }
+  .slider{
+    width:100%;
+    height: 6px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--grid);
+    border-radius: 3px;
+    outline: none;
+    margin: 8px 0 4px;
+  }
+  .slider::-webkit-slider-runnable-track{
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--coral) 0%, var(--coral) var(--p,60%), var(--grid) var(--p,60%), var(--grid) 100%);
+  }
+  .slider::-moz-range-track{
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--coral) 0%, var(--coral) var(--p,60%), var(--grid) var(--p,60%), var(--grid) 100%);
+  }
+  .slider::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 26px; height: 26px;
+    background: #fff;
+    border: 3px solid var(--coral);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    margin-top: -10px;
+  }
+  .slider::-moz-range-thumb{
+    width: 26px; height: 26px;
+    background:#fff;
+    border: 3px solid var(--coral);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .modal-actions{
+    display:flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .modal-actions .btn{ flex:1; }
+  .modal-actions .btn.cancel{
+    background: transparent;
+    color: var(--ink-soft);
+    box-shadow: none;
+    font-weight: 600;
+  }
+
+  /* ===== Toast ===== */
+  .toast{
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-200%);
+    background: var(--ink);
+    color: #fff;
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    z-index: 200;
+    transition: transform 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  }
+  .toast.show{ transform: translateX(-50%) translateY(0); }
+
+  /* ===== Capture mode adjustments ===== */
+  .card.capturing .form-row .input::placeholder,
+  .card.capturing .notes-input::placeholder{ color: transparent; }
+
+  @media (min-width: 520px){
+    .title{ font-size: 32px; }
+    .cat-label{ font-size: 14px; }
+    .scale-num{ font-size: 10px; }
+  }
+  /* ===== PASSWORD OVERLAY ===== */
+  #pwd-overlay{
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--cream-deep);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #pwd-overlay.hidden{ display: none; }
+  .pwd-box{
+    background: var(--paper);
+    border: 2px solid var(--sand);
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: min(340px, 90vw);
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(58,58,58,0.10);
+  }
+  .pwd-box h2{
+    font-family: 'Caveat', cursive;
+    font-size: 1.7rem;
+    color: var(--mint-dark);
+    margin: 0 0 6px;
+  }
+  .pwd-box p{
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+  }
+  .pwd-box input{
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--sand);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    outline: none;
+    text-align: center;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+  }
+  .pwd-box input:focus{ border-color: var(--mint-dark); }
+  .pwd-error{
+    font-size: 0.82rem;
+    color: var(--coral-dark);
+    min-height: 1.2em;
+    margin-bottom: 12px;
+  }
+  .pwd-box button{
+    background: var(--mint-dark);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 32px;
+    font-size: 1rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .pwd-box button:hover{ background: var(--mint); }
+</style>
+</head>
+<body>
+  <div id="pwd-overlay">
+    <div class="pwd-box">
+      <h2>🐾 Acceso privado</h2>
+      <p>Introduce la contraseña para continuar</p>
+      <input type="password" id="pwd-input" placeholder="••••••" autocomplete="current-password" />
+      <div class="pwd-error" id="pwd-error"></div>
+      <button onclick="checkPassword()">Entrar</button>
+    </div>
+  </div>
+  <div class="app">
+    <div class="card" id="card">
+      <!-- Decorative top -->
+      <div class="deco top" aria-hidden="true">
+        <i class="d-arc" style="background:var(--coral)"></i>
+        <i class="d-dot" style="background:var(--mint)"></i>
+        <i class="d-leaf" style="background:var(--coral-soft)"></i>
+        <i class="d-half" style="background:var(--mint-soft)"></i>
+        <i class="d-tri" style="border-bottom-color: var(--coral)"></i>
+        <i class="d-dot" style="background:var(--sand)"></i>
+        <i class="d-arc" style="background:var(--mint-dark)"></i>
+        <i class="d-leaf" style="background:var(--coral)"></i>
+        <i class="d-half" style="background:var(--mint)"></i>
+        <i class="d-dot" style="background:var(--coral-soft)"></i>
+        <i class="d-arc" style="background:var(--mint-soft)"></i>
+        <i class="d-tri" style="border-bottom-color: var(--mint)"></i>
+        <i class="d-leaf" style="background:var(--coral-dark)"></i>
+        <i class="d-dot" style="background:var(--mint-dark)"></i>
+      </div>
+
+      <h1 class="title">
+        <span class="small">la rueda de la vida</span>
+        <span id="title-dog">del perro</span>
+      </h1>
+
+      <p class="edit-hint" data-no-capture>Toca cada categoría para editar valor y leer su descripción</p>
+
+      <div class="chart-wrap">
+        <svg id="radar" class="radar" viewBox="0 95 600 430" xmlns="http://www.w3.org/2000/svg" aria-label="Gráfico radar de las áreas de la vida del perro"></svg>
+      </div>
+
+      <div class="form">
+        <div class="form-row">
+          <label for="parent">Nombre de Mamá y/o Papá Multiespecie:</label>
+          <input class="input" id="parent" type="text" placeholder="—" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label for="dog">Nombre del Perr@:</label>
+          <input class="input" id="dog" type="text" placeholder="—" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label for="date">Fecha de la Rueda de la Vida:</label>
+          <input class="input" id="date" type="date" />
+        </div>
+        <div class="notes">
+          <label for="notes">Algo más que me quieras contar:</label>
+          <textarea class="notes-input" id="notes" rows="3" placeholder=""></textarea>
+        </div>
+      </div>
+
+      <!-- Decorative bottom -->
+      <div class="deco bottom" aria-hidden="true">
+        <i class="d-leaf" style="background:var(--mint-dark)"></i>
+        <i class="d-dot" style="background:var(--coral)"></i>
+        <i class="d-arc" style="background:var(--mint)"></i>
+        <i class="d-tri" style="border-bottom-color: var(--coral-dark)"></i>
+        <i class="d-half" style="background:var(--coral-soft)"></i>
+        <i class="d-dot" style="background:var(--mint-dark)"></i>
+        <i class="d-leaf" style="background:var(--mint)"></i>
+        <i class="d-arc" style="background:var(--coral)"></i>
+        <i class="d-half" style="background:var(--sand)"></i>
+        <i class="d-tri" style="border-bottom-color: var(--mint-dark)"></i>
+        <i class="d-dot" style="background:var(--coral-soft)"></i>
+        <i class="d-leaf" style="background:var(--coral)"></i>
+        <i class="d-arc" style="background:var(--mint-soft)"></i>
+        <i class="d-dot" style="background:var(--mint)"></i>
+      </div>
+    </div>
+  </div>
+  <div class="actions">
+    <div class="actions-inner">
+      <button class="btn alt" id="btnReset" title="Reiniciar valores" aria-label="Reiniciar">↻</button>
+      <button class="btn" id="btnDownload">Descargar imagen</button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-bg" id="modal" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="handle"></div>
+      <h2 id="mTitle">Categoría</h2>
+      <div class="desc" id="mDesc"></div>
+      <div class="value-row">
+        <div class="num" id="mNum">7</div>
+        <div class="info">
+          <div class="lbl">Valor (1 — 10)</div>
+          <div class="stepper">
+            <button id="mMinus" aria-label="Restar">−</button>
+            <input type="range" min="1" max="10" step="1" value="7" class="slider" id="mSlider" />
+            <button id="mPlus" aria-label="Sumar">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn cancel" id="mCancel">Cerrar</button>
+        <button class="btn" id="mSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Imagen descargada</div>
+
+<script>
+/* ============================================================
+   Categorías y descripciones (placeholders — reemplazables)
+   ============================================================ */
+const CATS = [
+  { id: 'autonomia',     name: 'AUTONOMÍA',                angle: 22.5,  label: ['AUTONOMÍA'] },
+  { id: 'recursos',      name: 'RECURSOS',                 angle: 67.5,  label: ['RECURSOS'] },
+  { id: 'socializacion', name: 'SOCIALIZACIÓN Y PASEOS',   angle: 112.5, label: ['SOCIALIZACIÓN', 'Y PASEOS'] },
+  { id: 'salud',         name: 'SALUD',                    angle: 157.5, label: ['SALUD'] },
+  { id: 'calma',         name: 'CALMA',                    angle: 202.5, label: ['CALMA'] },
+  { id: 'amor',          name: 'AMOR',                     angle: 247.5, label: ['AMOR'] },
+  { id: 'seguridad',     name: 'SEGURIDAD',                angle: 292.5, label: ['SEGURIDAD'] },
+  { id: 'juego',         name: 'JUEGO',                    angle: 337.5, label: ['JUEGO'] },
+];
+
+const DESCRIPTIONS = {
+  autonomia: {
+    measures: 'La capacidad del perro para tomar pequeñas decisiones y tolerar estar solo o separado brevemente de sus humanos.',
+    ranges: [
+      { range: '1-3',  text: 'Sufre ansiedad al quedarse solo, persigue constantemente a la familia.' },
+      { range: '4-6',  text: 'Puede estar solo unos minutos en otra habitación, pero se inquieta rápido.' },
+      { range: '7-10', text: 'Se queda tranquilo en su cama o espacio sin mostrar estrés, aunque esté solo.' }
+    ]
+  },
+  recursos: {
+    measures: 'El acceso y la variedad de recursos (agua, comida, camas, juguetes) y si los usa de forma apropiada.',
+    ranges: [
+      { range: '1-3',  text: 'Tiene pocos juguetes y opciones de entretenimiento/estimulación, no usa/no tiene cama o refugio, recurso vital (agua/comida) irregular. Presenta agresividad por protección de recursos.' },
+      { range: '4-6',  text: 'Dispone de recursos básicos, pero de forma limitada o con poca variedad. Protege los recursos, pero sin entrar en conflicto.' },
+      { range: '7-10', text: 'Múltiples camas, agua fresca, alimentación de calidad y juguetes que cubren todas sus motivaciones.' }
+    ]
+  },
+  socializacion: {
+    measures: 'La calidad y frecuencia de sus interacciones fuera de casa: paseos, materiales de paseo, salidas higiénicas y encuentros con otros perros/personas.',
+    ranges: [
+      { range: '1-3',  text: 'Sale muy poco, paseos estresantes o inexistentes. No disfruta de las salidas. No usa material adecuado.' },
+      { range: '4-6',  text: 'Paseos breves e irregulares; pocas oportunidades de socializar.' },
+      { range: '7-10', text: 'Buenas salidas diarias (higiénicas + distendidas), material adecuado y tiempo para correr o interactuar.' }
+    ]
+  },
+  salud: {
+    measures: 'El estado físico y emocional del perro: revisiones veterinarias, ausencia de dolor o patologías, estrés.',
+    ranges: [
+      { range: '1-3',  text: 'Problemas de salud sin atender, estrés sostenido, desparasitación irregular, mala alimentación.' },
+      { range: '4-6',  text: 'Revisiones esporádicas, desbordes emocionales puntuales pero con vuelta a la normalidad en menos de 5 minutos, molestias o patologías controladas (no dolor). Alimentación acorde.' },
+      { range: '7-10', text: 'Chequeos regulares, buena nutrición, sin estrés y sin signos de malestar.' }
+    ]
+  },
+  calma: {
+    measures: 'La capacidad de tolerar la frustración y mantener un estado de reposo sin excesiva excitación.',
+    ranges: [
+      { range: '1-3',  text: 'Nervioso todo el día, bucles de insistencia, difícil de relajar.' },
+      { range: '4-6',  text: 'Momentos de calma breve seguidos de picos de energía o tensión.' },
+      { range: '7-10', text: 'Se mantiene tranquilo buena parte del tiempo, responde positivamente a entornos relajantes.' }
+    ]
+  },
+  amor: {
+    measures: 'La fortaleza del apego mutuo: frecuencia y calidad de las muestras de afecto y seguridad emocional.',
+    ranges: [
+      { range: '1-3',  text: 'Escaso contacto afectivo, dudas sobre la conexión emocional.' },
+      { range: '4-6',  text: 'Momentos de cariño intermitentes; el perro busca afecto, pero con inseguridad.' },
+      { range: '7-10', text: 'Abundante contacto positivo, juegos de vínculo y confianza mutua, entender su comunicación y respetarla.' }
+    ]
+  },
+  seguridad: {
+    measures: 'La sensación de protección y seguridad en el hogar y en entornos nuevos; confianza en sus humanos como base.',
+    ranges: [
+      { range: '1-3',  text: 'Inseguro con ruidos o cambios, no recurre al humano en apuros.' },
+      { range: '4-6',  text: 'A veces busca compañía, pero reacciona con miedo ante estímulos moderados.' },
+      { range: '7-10', text: 'Se siente protegido, explora con confianza, acude a sus referentes si algo le inquieta.' }
+    ]
+  },
+  juego: {
+    measures: 'La frecuencia e iniciativa de comportamientos lúdicos (solo, con humanos o con otros animales).',
+    ranges: [
+      { range: '1-3',  text: 'Casi no juega, falta de motivación.' },
+      { range: '4-6',  text: 'Juega ocasionalmente, necesita estímulo externo para participar. Demanda con mucha frecuencia y se frustra si no juegas con él.' },
+      { range: '7-10', text: 'Juega diariamente de forma autónoma y/o en interacción social, entiende cuándo termina el juego.' }
+    ]
+  }
+};
+
+/* ============================================================
+   Estado
+   ============================================================ */
+const STORE_KEY = 'rueda-vida-perro-v1';
+const DEFAULTS = {
+  values: { autonomia:7, recursos:7, socializacion:6, salud:5, calma:6, amor:7, seguridad:7, juego:7 },
+  parent: '', dog: '', date: '', notes: ''
+};
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return JSON.parse(JSON.stringify(DEFAULTS));
+    const s = JSON.parse(raw);
+    return {
+      values: { ...DEFAULTS.values, ...(s.values||{}) },
+      parent: s.parent ?? '',
+      dog: s.dog ?? '',
+      date: s.date ?? '',
+      notes: s.notes ?? ''
+    };
+  }catch(e){ return JSON.parse(JSON.stringify(DEFAULTS)); }
+}
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ============================================================
+   Radar SVG render
+   ============================================================ */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const CX = 300, CY = 310;
+const R = 175;
+
+function pt(angleDeg, radius){
+  const a = angleDeg * Math.PI / 180;
+  return [CX + radius * Math.sin(a), CY - radius * Math.cos(a)];
+}
+function el(name, attrs={}, content){
+  const node = document.createElementNS(SVG_NS, name);
+  for(const k in attrs){ node.setAttribute(k, attrs[k]); }
+  if(content !== undefined) node.textContent = content;
+  return node;
+}
+
+function renderRadar(){
+  const svg = document.getElementById('radar');
+  svg.innerHTML = '';
+
+  // Concentric circles (10 rings)
+  for(let i=1;i<=10;i++){
+    const rad = R * i / 10;
+    const c = el('circle', {
+      cx:CX, cy:CY, r: rad,
+      class: 'grid-circle' + (i % 2 === 0 ? ' alt' : '')
+    });
+    if(i===10) c.setAttribute('class', 'grid-outer');
+    svg.appendChild(c);
+  }
+
+  // 8 axis lines
+  CATS.forEach(c => {
+    const [x,y] = pt(c.angle, R);
+    svg.appendChild(el('line', { x1:CX, y1:CY, x2:x, y2:y, class:'axis' }));
+  });
+
+  // central vertical & horizontal cross (subtle)
+  svg.appendChild(el('line', { x1:CX, y1:CY-R, x2:CX, y2:CY+R, class:'axis-cross' }));
+  svg.appendChild(el('line', { x1:CX-R, y1:CY, x2:CX+R, y2:CY, class:'axis-cross' }));
+
+  // Scale numbers (1 to 10) on the central vertical, going up
+  for(let i=1;i<=10;i++){
+    const y = CY - (R * i / 10) + 4;
+    svg.appendChild(el('text', {
+      x: CX + 7, y: y,
+      class:'scale-num'
+    }, String(i)));
+  }
+
+  // Data polygon
+  const dataPts = CATS.map(c => {
+    const v = state.values[c.id];
+    const [x,y] = pt(c.angle, R * v / 10);
+    return [x,y];
+  });
+  svg.appendChild(el('polygon', {
+    points: dataPts.map(p=>p.join(',')).join(' '),
+    class: 'data-poly'
+  }));
+
+  // Data dots
+  dataPts.forEach(([x,y]) => {
+    svg.appendChild(el('circle', { cx:x, cy:y, r:5.5, class:'data-dot' }));
+  });
+
+  // Labels (multi-line) + invisible tap target
+  CATS.forEach(c => {
+    const lineCount = c.label.length;
+    const lblPad = lineCount > 1 ? 28 : 22;
+    const [lx, ly] = pt(c.angle, R + lblPad);
+    const [axX] = pt(c.angle, R);
+
+    let anchor;
+    const dx = axX - CX;
+    if (Math.abs(dx) < 6) anchor = 'middle';
+    else if (dx > 0) anchor = 'start';
+    else anchor = 'end';
+
+    c.label.forEach((line, i) => {
+      const yOff = (i - (lineCount - 1)/2) * 17;
+      const t = el('text', {
+        x: lx, y: ly + yOff,
+        'text-anchor': anchor,
+        'dominant-baseline': 'middle',
+        class: 'cat-label',
+        'data-cat': c.id
+      }, line);
+      svg.appendChild(t);
+    });
+
+    // tap circle
+    const hitR = lineCount > 1 ? 56 : 40;
+    const hit = el('circle', {
+      cx: lx, cy: ly, r: hitR,
+      class:'cat-hit',
+      'data-cat': c.id
+    });
+    svg.appendChild(hit);
+  });
+
+  // wire up taps
+  svg.querySelectorAll('[data-cat]').forEach(node => {
+    node.addEventListener('click', e => {
+      e.stopPropagation();
+      openModal(node.getAttribute('data-cat'));
+    });
+  });
+}
+
+/* ============================================================
+   Modal
+   ============================================================ */
+const modal = document.getElementById('modal');
+const mTitle = document.getElementById('mTitle');
+const mDesc  = document.getElementById('mDesc');
+const mNum   = document.getElementById('mNum');
+const mSlider= document.getElementById('mSlider');
+let activeCat = null;
+
+function updateSliderFill(v){
+  const pct = ((v - 1) / 9) * 100;
+  mSlider.style.setProperty('--p', pct + '%');
+  mNum.textContent = v;
+}
+
+function openModal(catId){
+  const cat = CATS.find(c => c.id === catId);
+  if(!cat) return;
+  activeCat = catId;
+  mTitle.textContent = cat.name;
+  const d = DESCRIPTIONS[catId];
+  if(d){
+    let html = '';
+    if(d.measures){
+      html += `<p class="measures"><b>¿Qué mide?</b> ${escapeHtml(d.measures)}</p>`;
+    }
+    if(d.ranges && d.ranges.length){
+      html += '<ul class="ranges">';
+      d.ranges.forEach(r => {
+        html += `<li><span class="rg">${escapeHtml(r.range)}</span><span>${escapeHtml(r.text)}</span></li>`;
+      });
+      html += '</ul>';
+    }
+    mDesc.innerHTML = html;
+  } else {
+    mDesc.textContent = '';
+  }
+  const v = state.values[catId];
+  mSlider.value = v;
+  updateSliderFill(v);
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function closeModal(){
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+  activeCat = null;
+}
+
+mSlider.addEventListener('input', e => updateSliderFill(+e.target.value));
+document.getElementById('mPlus').addEventListener('click', () => {
+  const v = Math.min(10, +mSlider.value + 1);
+  mSlider.value = v; updateSliderFill(v);
+});
+document.getElementById('mMinus').addEventListener('click', () => {
+  const v = Math.max(1, +mSlider.value - 1);
+  mSlider.value = v; updateSliderFill(v);
+});
+document.getElementById('mSave').addEventListener('click', () => {
+  if(activeCat){
+    state.values[activeCat] = +mSlider.value;
+    saveState();
+    renderRadar();
+  }
+  closeModal();
+});
+document.getElementById('mCancel').addEventListener('click', closeModal);
+modal.addEventListener('click', e => {
+  if(e.target === modal) closeModal();
+});
+
+/* ============================================================
+   Form bindings
+   ============================================================ */
+const fParent = document.getElementById('parent');
+const fDog    = document.getElementById('dog');
+const fDate   = document.getElementById('date');
+const fNotes  = document.getElementById('notes');
+
+fParent.value = state.parent || '';
+fDog.value    = state.dog    || '';
+fDate.value   = state.date   || '';
+fNotes.value  = state.notes  || '';
+
+[ ['parent', fParent], ['dog', fDog], ['date', fDate], ['notes', fNotes] ].forEach(([k, n]) => {
+  n.addEventListener('input', () => { state[k] = n.value; saveState(); });
+});
+
+/* ============================================================
+   Reset
+   ============================================================ */
+document.getElementById('btnReset').addEventListener('click', () => {
+  if(!confirm('¿Reiniciar todos los valores a 5?')) return;
+  CATS.forEach(c => { state.values[c.id] = 5; });
+  saveState();
+  renderRadar();
+});
+
+/* ============================================================
+   Download as PNG (html2canvas)
+   ============================================================ */
+const btnDownload = document.getElementById('btnDownload');
+btnDownload.addEventListener('click', async () => {
+  const card = document.getElementById('card');
+  btnDownload.disabled = true;
+  btnDownload.textContent = 'Preparando…';
+
+  // Hide non-capture elements & switch placeholders off
+  const hideEls = card.querySelectorAll('[data-no-capture]');
+  hideEls.forEach(n => n.style.visibility = 'hidden');
+  card.classList.add('capturing');
+
+  // Make sure fonts are ready
+  try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e) {}
+
+  try{
+    const canvas = await html2canvas(card, {
+      backgroundColor: null,
+      scale: Math.min(3, (window.devicePixelRatio||1) * 2),
+      useCORS: true,
+      logging: false
+    });
+    const filename = buildFilename();
+    canvas.toBlob(blob => {
+      if(!blob){ showToast('No se pudo generar la imagen'); restore(); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=> URL.revokeObjectURL(url), 1000);
+      showToast('Imagen guardada');
+      restore();
+    }, 'image/png');
+  }catch(err){
+    console.error(err);
+    showToast('Error generando imagen');
+    restore();
+  }
+
+  function restore(){
+    hideEls.forEach(n => n.style.visibility = '');
+    card.classList.remove('capturing');
+    btnDownload.disabled = false;
+    btnDownload.textContent = 'Descargar imagen';
+  }
+});
+
+function buildFilename(){
+  const slug = (s) => (s||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const parts = ['rueda-vida'];
+  if(state.dog) parts.push(slug(state.dog));
+  if(state.date) parts.push(state.date);
+  return parts.filter(Boolean).join('_') + '.png';
+}
+
+/* ============================================================
+   Toast
+   ============================================================ */
+const toast = document.getElementById('toast');
+let toastT;
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=> toast.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   Init
+   ============================================================ */
+renderRadar();
+</script>
+<script>
+function checkPassword(){
+  const val = document.getElementById('pwd-input').value;
+  if(val === 'PCM'){
+    document.getElementById('pwd-overlay').classList.add('hidden');
+  } else {
+    document.getElementById('pwd-error').textContent = 'Contraseña incorrecta. Inténtalo de nuevo.';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+document.getElementById('pwd-input').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') checkPassword();
+});
+
+document.getElementById('dog').addEventListener('input', function(){
+  const name = this.value.trim();
+  document.getElementById('title-dog').textContent = name ? 'de ' + name : 'del perro';
+});
+</script>
+</body>
+</html>
