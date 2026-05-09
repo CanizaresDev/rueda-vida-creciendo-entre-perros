@@ -818,7 +818,9 @@ function renderRadar(){
     const y = CY - (R * i / 10) + 4;
     svg.appendChild(el('text', {
       x: CX + 7, y: y,
-      class:'scale-num'
+      class:'scale-num',
+      'font-family': 'Nunito, sans-serif',
+      'font-size': '10'
     }, String(i)));
   }
 
@@ -858,7 +860,10 @@ function renderRadar(){
         'text-anchor': anchor,
         'dominant-baseline': 'middle',
         class: 'cat-label',
-        'data-cat': c.id
+        'data-cat': c.id,
+        'font-family': 'Patrick Hand, cursive',
+        'font-size': '15',
+        'letter-spacing': '1.4'
       }, line);
       svg.appendChild(t);
     });
