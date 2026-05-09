@@ -982,6 +982,9 @@ fDog.value    = state.dog    || '';
 fDate.value   = state.date   || '';
 fNotes.value  = state.notes  || '';
 
+// Sync title with saved dog name on load
+(function(){ const n = fDog.value.trim(); document.getElementById('title-dog').textContent = n ? 'de ' + n : 'del perro'; })();
+
 [ ['parent', fParent], ['dog', fDog], ['date', fDate], ['notes', fNotes] ].forEach(([k, n]) => {
   n.addEventListener('input', () => { state[k] = n.value; saveState(); });
 });
