@@ -554,7 +554,7 @@
     <div class="pwd-box">
       <h2>🐾 Acceso privado</h2>
       <p>Introduce la contraseña para continuar</p>
-      <input type="text" id="pwd-input" placeholder="••••••" autocomplete="off" inputmode="text" style="-webkit-text-security:disc;" />
+      <input type="text" id="pwd-input" placeholder="••••••" autocomplete="off" inputmode="text" />
       <div class="pwd-error" id="pwd-error"></div>
       <button onclick="checkPassword()">Entrar</button>
     </div>
@@ -1088,17 +1088,36 @@ renderRadar();
 </script>
 <script>
 function checkPassword(){
-  const val = document.getElementById('pwd-input').value;
-  if(val === 'PCM'){
+  if(_pwdReal === 'PCM'){
     document.getElementById('pwd-overlay').classList.add('hidden');
   } else {
     document.getElementById('pwd-error').textContent = 'Contraseña incorrecta. Inténtalo de nuevo.';
     document.getElementById('pwd-input').value = '';
+    _pwdReal = '';
     document.getElementById('pwd-input').focus();
   }
 }
-document.getElementById('pwd-input').addEventListener('keydown', function(e){
-  if(e.key === 'Enter') checkPassword();
+// Custom password masking to avoid browser-forced colors on Android
+let _pwdReal = '';
+const _pwdEl = document.getElementById('pwd-input');
+_pwdEl.addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ checkPassword(); return; }
+});
+_pwdEl.addEventListener('input', function(e){
+  const dots = this.value;
+  const prev = _pwdReal;
+  if(dots.length > prev.length){
+    // characters added
+    const added = dots.slice(prev.length).replace(/●/g, '');
+    _pwdReal = prev + added;
+  } else {
+    // characters removed
+    _pwdReal = prev.slice(0, dots.length);
+  }
+  // replace display with dots
+  const pos = this.selectionStart;
+  this.value = '●'.repeat(_pwdReal.length);
+  try { this.setSelectionRange(pos, pos); } catch(e){}
 });
 
 document.getElementById('dog').addEventListener('input', function(){
