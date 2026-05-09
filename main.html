@@ -1002,40 +1002,6 @@ btnDownload.addEventListener('click', async () => {
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e) {}
   await new Promise(r => setTimeout(r, 300));
 
-  // Pre-fetch font files and convert to base64 so html2canvas can embed them
-  async function fetchFontAsDataURL(url, mime) {
-    try {
-      const res = await fetch(url);
-      const buf = await res.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      let b64 = '';
-      const chunk = 8192;
-      for (let i = 0; i < bytes.length; i += chunk) {
-        b64 += String.fromCharCode(...bytes.subarray(i, i + chunk));
-      }
-      return `data:${mime};base64,` + btoa(b64);
-    } catch(e) { return null; }
-  }
-
-  async function buildFontCSS() {
-    const variants = [
-      { family: 'Patrick Hand', weight: 400, mime: 'font/ttf', url: 'https://fonts.gstatic.com/s/patrickhand/v25/LDI1apSQOAYtSuYWp8ZhfYeMWQ.ttf' },
-      { family: 'Caveat',       weight: 400, mime: 'font/ttf', url: 'https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjfJ9SII.ttf' },
-      { family: 'Caveat',       weight: 700, mime: 'font/ttf', url: 'https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6SII.ttf' },
-      { family: 'Nunito',       weight: 400, mime: 'font/ttf', url: 'https://fonts.gstatic.com/s/nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshRTM.ttf' },
-      { family: 'Nunito',       weight: 600, mime: 'font/ttf', url: 'https://fonts.gstatic.com/s/nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDGUmRTM.ttf' },
-      { family: 'Nunito',       weight: 700, mime: 'font/ttf', url: 'https://fonts.gstatic.com/s/nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDFwmRTM.ttf' },
-    ];
-    const results = await Promise.all(variants.map(async v => {
-      const dataUrl = await fetchFontAsDataURL(v.url, v.mime);
-      if (!dataUrl) return '';
-      return `@font-face{font-family:'${v.family}';font-weight:${v.weight};font-style:normal;src:url('${dataUrl}') format('truetype');}`;
-    }));
-    return results.join('\n');
-  }
-
-  const fontCSS = await buildFontCSS();
-
   try{
     const canvas = await html2canvas(card, {
       backgroundColor: null,
@@ -1044,12 +1010,18 @@ btnDownload.addEventListener('click', async () => {
       allowTaint: true,
       logging: false,
       onclone: async (doc) => {
-        try { await doc.fonts.ready; } catch(e) {}
+        // Copy all already-loaded fonts into the cloned document
+        const fontCSS = Array.from(document.styleSheets)
+          .flatMap(sheet => { try { return Array.from(sheet.cssRules); } catch(e) { return []; } })
+          .filter(r => r instanceof CSSFontFaceRule)
+          .map(r => r.cssText)
+          .join('\n');
         if (fontCSS) {
           const style = doc.createElement('style');
           style.textContent = fontCSS;
           doc.head.prepend(style);
         }
+        try { await doc.fonts.ready; } catch(e) {}
       }
     });
     const filename = buildFilename();
