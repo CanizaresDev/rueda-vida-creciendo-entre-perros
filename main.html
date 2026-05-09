@@ -131,8 +131,8 @@
   }
   .cat-label{
     font-family:'Patrick Hand', cursive;
-    font-size: 15px;
-    letter-spacing: 1.4px;
+    font-size: 17px;
+    letter-spacing: 1px;
     fill: var(--mint-dark);
     cursor: pointer;
     user-select:none;
@@ -861,7 +861,7 @@ function renderRadar(){
     else anchor = 'end';
 
     c.label.forEach((line, i) => {
-      const yOff = (i - (lineCount - 1)/2) * 17;
+      const yOff = (i - (lineCount - 1)/2) * 19;
       const t = el('text', {
         x: lx, y: ly + yOff,
         'text-anchor': anchor,
@@ -869,8 +869,8 @@ function renderRadar(){
         class: 'cat-label',
         'data-cat': c.id,
         'font-family': 'Patrick Hand, cursive',
-        'font-size': '15',
-        'letter-spacing': '1.4'
+        'font-size': '17',
+        'letter-spacing': '1'
       }, line);
       svg.appendChild(t);
     });
@@ -1012,7 +1012,25 @@ btnDownload.addEventListener('click', async () => {
 
   // Make sure fonts are ready and painted
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e) {}
-  await new Promise(r => setTimeout(r, 500));
+
+  // Embed Patrick Hand as base64 inside the SVG so html2canvas captures it
+  let svgFontStyle = null;
+  try {
+    const fontUrl = 'https://fonts.gstatic.com/s/patrickhand/v23/LDI1apSQOAYtSuYWp8ZweORKctQKLQ.woff2';
+    const resp = await fetch(fontUrl);
+    if (resp.ok) {
+      const buf = await resp.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const svg = document.getElementById('radar');
+      let defs = svg.querySelector('defs');
+      if (!defs) { defs = document.createElementNS(SVG_NS, 'defs'); svg.prepend(defs); }
+      svgFontStyle = document.createElementNS(SVG_NS, 'style');
+      svgFontStyle.textContent = `@font-face{font-family:'Patrick Hand';src:url('data:font/woff2;base64,${b64}') format('woff2');}`;
+      defs.appendChild(svgFontStyle);
+    }
+  } catch(e) {}
+
+  await new Promise(r => setTimeout(r, 400));
 
   try{
     const canvas = await html2canvas(card, {
@@ -1048,6 +1066,7 @@ btnDownload.addEventListener('click', async () => {
   function restore(){
     hideEls.forEach(n => n.style.visibility = '');
     card.classList.remove('capturing');
+    if (svgFontStyle && svgFontStyle.parentNode) svgFontStyle.parentNode.removeChild(svgFontStyle);
     btnDownload.disabled = false;
     btnDownload.textContent = 'Descargar imagen';
   }
