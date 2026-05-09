@@ -517,18 +517,23 @@
     padding: 10px 14px;
     border: 1.5px solid var(--sand);
     border-radius: 10px;
-    font-size: 1rem;
+    font-size: 1.4rem;
     font-family: 'Nunito', sans-serif;
     background: var(--cream);
-    color: #5FA694;
-    -webkit-text-fill-color: #5FA694;
-    caret-color: #5FA694;
+    color: var(--mint-dark);
+    -webkit-text-fill-color: var(--mint-dark);
+    caret-color: var(--mint-dark);
     outline: none;
     text-align: center;
-    letter-spacing: 4px;
+    letter-spacing: 6px;
     margin-bottom: 10px;
   }
   .pwd-box input:focus{ border-color: var(--mint-dark); }
+  .pwd-box input::-ms-reveal,
+  .pwd-box input::-ms-clear,
+  .pwd-box input::-webkit-credentials-auto-fill-button,
+  .pwd-box input::-webkit-strong-password-auto-fill-button,
+  .pwd-box input::-webkit-contacts-auto-fill-button { display: none !important; }
   .pwd-error{
     font-size: 0.82rem;
     color: var(--coral-dark);
@@ -552,9 +557,9 @@
 <body>
   <div id="pwd-overlay">
     <div class="pwd-box">
-      <h2>🐾 Acceso privado</h2>
+      <h2>Acceso privado</h2>
       <p>Introduce la contraseña para continuar</p>
-      <input type="text" id="pwd-input" placeholder="••••••" autocomplete="off" inputmode="text" />
+      <input type="password" id="pwd-input" placeholder="••••••" autocomplete="new-password" />
       <div class="pwd-error" id="pwd-error"></div>
       <button onclick="checkPassword()">Entrar</button>
     </div>
@@ -587,7 +592,7 @@
       <p class="edit-hint" data-no-capture>Toca cada categoría para editar valor y leer su descripción</p>
 
       <div class="chart-wrap">
-        <svg id="radar" class="radar" viewBox="0 95 600 430" xmlns="http://www.w3.org/2000/svg" aria-label="Gráfico radar de las áreas de la vida del perro"></svg>
+        <svg id="radar" class="radar" viewBox="-30 95 660 430" xmlns="http://www.w3.org/2000/svg" aria-label="Gráfico radar de las áreas de la vida del perro"></svg>
       </div>
 
       <div class="form">
@@ -1077,36 +1082,17 @@ renderRadar();
 </script>
 <script>
 function checkPassword(){
-  if(_pwdReal === 'PCM'){
+  const entered = document.getElementById('pwd-input').value;
+  if(entered === 'PCM'){
     document.getElementById('pwd-overlay').classList.add('hidden');
   } else {
     document.getElementById('pwd-error').textContent = 'Contraseña incorrecta. Inténtalo de nuevo.';
     document.getElementById('pwd-input').value = '';
-    _pwdReal = '';
     document.getElementById('pwd-input').focus();
   }
 }
-// Custom password masking to avoid browser-forced colors on Android
-let _pwdReal = '';
-const _pwdEl = document.getElementById('pwd-input');
-_pwdEl.addEventListener('keydown', function(e){
-  if(e.key === 'Enter'){ checkPassword(); return; }
-});
-_pwdEl.addEventListener('input', function(e){
-  const dots = this.value;
-  const prev = _pwdReal;
-  if(dots.length > prev.length){
-    // characters added
-    const added = dots.slice(prev.length).replace(/●/g, '');
-    _pwdReal = prev + added;
-  } else {
-    // characters removed
-    _pwdReal = prev.slice(0, dots.length);
-  }
-  // replace display with dots
-  const pos = this.selectionStart;
-  this.value = '●'.repeat(_pwdReal.length);
-  try { this.setSelectionRange(pos, pos); } catch(e){}
+document.getElementById('pwd-input').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ checkPassword(); }
 });
 
 document.getElementById('dog').addEventListener('input', function(){
