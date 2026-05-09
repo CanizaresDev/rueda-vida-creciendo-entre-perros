@@ -814,9 +814,19 @@ function el(name, attrs={}, content){
   return node;
 }
 
+const PATRICK_HAND_B64 = document.querySelector("style").textContent.match(/Patrick Hand[\s\S]*?base64,([^']+)/)[1];
+const PATRICK_HAND_FONT_FACE = "@font-face{font-family:'Patrick Hand';src:url('data:font/woff2;base64," + PATRICK_HAND_B64 + "')format('woff2');}";
+
 function renderRadar(){
   const svg = document.getElementById('radar');
   svg.innerHTML = '';
+
+  // Inject font inside SVG so html2canvas can use it when serializing the SVG as an image
+  const defs = document.createElementNS(SVG_NS, 'defs');
+  const svgStyle = document.createElementNS(SVG_NS, 'style');
+  svgStyle.textContent = PATRICK_HAND_FONT_FACE;
+  defs.appendChild(svgStyle);
+  svg.appendChild(defs);
 
   // Concentric circles (10 rings)
   for(let i=1;i<=10;i++){
