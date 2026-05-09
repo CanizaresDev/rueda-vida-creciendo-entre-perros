@@ -998,15 +998,54 @@ btnDownload.addEventListener('click', async () => {
   hideEls.forEach(n => n.style.visibility = 'hidden');
   card.classList.add('capturing');
 
-  // Make sure fonts are ready
+  // Make sure fonts are ready and painted
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e) {}
+  await new Promise(r => setTimeout(r, 300));
+
+  // Pre-fetch font files and convert to base64 so html2canvas can embed them
+  async function fetchFontAsDataURL(url) {
+    try {
+      const res = await fetch(url);
+      const buf = await res.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      return 'data:font/woff2;base64,' + b64;
+    } catch(e) { return null; }
+  }
+
+  async function buildFontCSS() {
+    const variants = [
+      { family: 'Patrick Hand', weight: 400, url: 'https://fonts.gstatic.com/s/patrickhand/v23/LDI1apSQOAYtSuYWp8ZhfYe8XsLL.woff2' },
+      { family: 'Caveat', weight: 400, url: 'https://fonts.gstatic.com/s/caveat/v18/WnznHAc5bAfYB2QRah7pcpNvOx-pjfJ9eIWpZA.woff2' },
+      { family: 'Caveat', weight: 700, url: 'https://fonts.gstatic.com/s/caveat/v18/WnznHAc5bAfYB2QRah7pcpNvOx-pjcZ9eIWpZA.woff2' },
+      { family: 'Nunito', weight: 400, url: 'https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDIkhdTQ3j6zbXWjgeg.woff2' },
+      { family: 'Nunito', weight: 600, url: 'https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDIkhdTo0j6zbXWjgeg.woff2' },
+      { family: 'Nunito', weight: 700, url: 'https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDIkhdSU0j6zbXWjgeg.woff2' },
+    ];
+    const results = await Promise.all(variants.map(async v => {
+      const dataUrl = await fetchFontAsDataURL(v.url);
+      if (!dataUrl) return '';
+      return `@font-face{font-family:'${v.family}';font-weight:${v.weight};font-style:normal;src:url('${dataUrl}') format('woff2');}`;
+    }));
+    return results.join('\n');
+  }
+
+  const fontCSS = await buildFontCSS();
 
   try{
     const canvas = await html2canvas(card, {
       backgroundColor: null,
       scale: Math.min(3, (window.devicePixelRatio||1) * 2),
       useCORS: true,
-      logging: false
+      allowTaint: true,
+      logging: false,
+      onclone: async (doc) => {
+        try { await doc.fonts.ready; } catch(e) {}
+        if (fontCSS) {
+          const style = doc.createElement('style');
+          style.textContent = fontCSS;
+          doc.head.prepend(style);
+        }
+      }
     });
     const filename = buildFilename();
     canvas.toBlob(blob => {
