@@ -1007,86 +1007,48 @@ btnDownload.addEventListener('click', async () => {
 
   // Make sure fonts are ready and painted
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e) {}
-  await new Promise(r => setTimeout(r, 300));
+  await new Promise(r => setTimeout(r, 500));
 
   try{
-    // Hide SVG text nodes so html2canvas skips them (fonts unreliable in cloned doc)
-    const svgTexts = document.querySelectorAll('#radar text');
-    svgTexts.forEach(t => { t.style.visibility = 'hidden'; });
-
-    const scale = Math.min(3, (window.devicePixelRatio||1) * 2);
     const canvas = await html2canvas(card, {
       backgroundColor: null,
-      scale,
+      scale: Math.min(3, (window.devicePixelRatio||1) * 2),
       useCORS: true,
       allowTaint: true,
       logging: false,
       onclone: async (doc) => {
+        // Load fonts explicitly in the cloned document via FontFace API
+        const loadFont = async (family, url) => {
+          try {
+            const font = new doc.defaultView.FontFace(family, `url(${url})`);
+            await font.load();
+            doc.fonts.add(font);
+          } catch(e) {}
+        };
+
+        // Fetch Google Fonts CSS to get the actual woff2 URLs
+        const getWoff2Url = async (gfontsUrl) => {
+          try {
+            const r = await fetch(gfontsUrl, { headers: { 'User-Agent': navigator.userAgent } });
+            const css = await r.text();
+            const match = css.match(/src:[^;]*url\(([^)]+\.woff2)\)/);
+            return match ? match[1] : null;
+          } catch(e) { return null; }
+        };
+
+        const [phUrl, nvUrl] = await Promise.all([
+          getWoff2Url('https://fonts.googleapis.com/css2?family=Patrick+Hand'),
+          getWoff2Url('https://fonts.googleapis.com/css2?family=Nunito:wght@400'),
+        ]);
+
+        await Promise.all([
+          phUrl ? loadFont('Patrick Hand', phUrl) : Promise.resolve(),
+          nvUrl ? loadFont('Nunito', nvUrl) : Promise.resolve(),
+        ]);
+
         try { await doc.fonts.ready; } catch(e) {}
       }
     });
-
-    // Restore SVG texts in the live document
-    svgTexts.forEach(t => { t.style.visibility = ''; });
-
-    // Redraw SVG text labels directly on the canvas using fonts already loaded in this document
-    const ctx = canvas.getContext('2d');
-    const svgEl = document.getElementById('radar');
-    const svgRect = svgEl.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    const offsetX = (svgRect.left - cardRect.left) * scale;
-    const offsetY = (svgRect.top  - cardRect.top)  * scale;
-    const svgW = svgRect.width;
-    const svgH = svgRect.height;
-    // SVG viewBox: "0 95 600 430"
-    const vbX = 0, vbY = 95, vbW = 600, vbH = 430;
-    const scaleX = (svgW / vbW) * scale;
-    const scaleY = (svgH / vbH) * scale;
-
-    const svgToCanvas = (x, y) => [
-      offsetX + (x - vbX) * scaleX,
-      offsetY + (y - vbY) * scaleY
-    ];
-
-    ctx.save();
-    ctx.textBaseline = 'middle';
-
-    // Scale numbers (Nunito bold, fill: #5FA694)
-    ctx.fillStyle = '#5FA694';
-    const numFontSize = 10 * scaleY;
-    ctx.font = `700 ${numFontSize}px 'Nunito', sans-serif`;
-    ctx.textAlign = 'left';
-    for (let i = 1; i <= 10; i++) {
-      const svgX = CX + 7;
-      const svgY = CY - (R * i / 10) + 4;
-      const [cx, cy] = svgToCanvas(svgX, svgY);
-      ctx.fillText(String(i), cx, cy);
-    }
-
-    // Category labels (Patrick Hand, fill: #5FA694)
-    const lblFontSize = 15 * scaleY;
-    ctx.font = `400 ${lblFontSize}px 'Patrick Hand', cursive`;
-    ctx.letterSpacing = (1.4 * scaleX) + 'px';
-
-    CATS.forEach(c => {
-      const lineCount = c.label.length;
-      const lblPad = lineCount > 1 ? 28 : 22;
-      const [lx, ly] = pt(c.angle, R + lblPad);
-      const [axX] = pt(c.angle, R);
-      const dx = axX - CX;
-      if (Math.abs(dx) < 6) ctx.textAlign = 'center';
-      else if (dx > 0) ctx.textAlign = 'left';
-      else ctx.textAlign = 'right';
-
-      c.label.forEach((line, i) => {
-        const yOff = (i - (lineCount - 1) / 2) * 17;
-        const [cx, cy] = svgToCanvas(lx, ly + yOff);
-        ctx.fillText(line, cx, cy);
-      });
-    });
-
-    ctx.restore();
-
     const filename = buildFilename();
     canvas.toBlob(blob => {
       if(!blob){ showToast('No se pudo generar la imagen'); restore(); return; }
@@ -1103,7 +1065,6 @@ btnDownload.addEventListener('click', async () => {
     }, 'image/png');
   }catch(err){
     console.error(err);
-    document.querySelectorAll('#radar text').forEach(t => { t.style.visibility = ''; });
     showToast('Error generando imagen');
     restore();
   }
