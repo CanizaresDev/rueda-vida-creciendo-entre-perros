@@ -1007,7 +1007,7 @@ btnDownload.addEventListener('click', async () => {
 
   // Make sure fonts are ready and painted
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e) {}
-  await new Promise(r => setTimeout(r, 300));
+  await new Promise(r => setTimeout(r, 500));
 
   try{
     const canvas = await html2canvas(card, {
@@ -1017,17 +1017,35 @@ btnDownload.addEventListener('click', async () => {
       allowTaint: true,
       logging: false,
       onclone: async (doc) => {
-        // Copy all already-loaded fonts into the cloned document
-        const fontCSS = Array.from(document.styleSheets)
-          .flatMap(sheet => { try { return Array.from(sheet.cssRules); } catch(e) { return []; } })
-          .filter(r => r instanceof CSSFontFaceRule)
-          .map(r => r.cssText)
-          .join('\n');
-        if (fontCSS) {
-          const style = doc.createElement('style');
-          style.textContent = fontCSS;
-          doc.head.prepend(style);
-        }
+        // Load fonts explicitly in the cloned document via FontFace API
+        const loadFont = async (family, url) => {
+          try {
+            const font = new doc.defaultView.FontFace(family, `url(${url})`);
+            await font.load();
+            doc.fonts.add(font);
+          } catch(e) {}
+        };
+
+        // Fetch Google Fonts CSS to get the actual woff2 URLs
+        const getWoff2Url = async (gfontsUrl) => {
+          try {
+            const r = await fetch(gfontsUrl, { headers: { 'User-Agent': navigator.userAgent } });
+            const css = await r.text();
+            const match = css.match(/src:[^;]*url\(([^)]+\.woff2)\)/);
+            return match ? match[1] : null;
+          } catch(e) { return null; }
+        };
+
+        const [phUrl, nvUrl] = await Promise.all([
+          getWoff2Url('https://fonts.googleapis.com/css2?family=Patrick+Hand'),
+          getWoff2Url('https://fonts.googleapis.com/css2?family=Nunito:wght@400'),
+        ]);
+
+        await Promise.all([
+          phUrl ? loadFont('Patrick Hand', phUrl) : Promise.resolve(),
+          nvUrl ? loadFont('Nunito', nvUrl) : Promise.resolve(),
+        ]);
+
         try { await doc.fonts.ready; } catch(e) {}
       }
     });
