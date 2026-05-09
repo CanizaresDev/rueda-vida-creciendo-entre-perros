@@ -1007,8 +1007,13 @@ btnDownload.addEventListener('click', async () => {
     try {
       const res = await fetch(url);
       const buf = await res.arrayBuffer();
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-      return 'data:font/woff2;base64,' + b64;
+      const bytes = new Uint8Array(buf);
+      let b64 = '';
+      const chunk = 8192;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        b64 += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      return 'data:font/woff2;base64,' + btoa(b64);
     } catch(e) { return null; }
   }
 
