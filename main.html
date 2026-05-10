@@ -1017,9 +1017,10 @@ btnDownload.addEventListener('click', async () => {
   await new Promise(r => setTimeout(r, 400));
 
   try{
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const canvas = await html2canvas(card, {
       backgroundColor: null,
-      scale: Math.min(3, (window.devicePixelRatio||1) * 2),
+      scale: isMobile ? Math.min(2, window.devicePixelRatio||1) : Math.min(3, (window.devicePixelRatio||1) * 2),
       useCORS: true,
       allowTaint: true,
       logging: false,
@@ -1029,7 +1030,7 @@ btnDownload.addEventListener('click', async () => {
     });
     const filename = buildFilename();
     canvas.toBlob(blob => {
-      if(!blob){ showToast('No se pudo generar la imagen'); restore(); return; }
+      if(!blob || blob.size < 1000){ showToast('No se pudo generar la imagen'); restore(); return; }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
