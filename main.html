@@ -1030,6 +1030,7 @@ btnDownload.addEventListener('click', async () => {
     });
     const filename = buildFilename();
     canvas.toBlob(blob => {
+      showToast('Blob: ' + (blob ? blob.size + ' bytes' : 'null'));
       if(!blob || blob.size < 1000){ showToast('No se pudo generar la imagen'); restore(); return; }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
