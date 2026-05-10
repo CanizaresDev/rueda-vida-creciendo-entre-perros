@@ -51,28 +51,35 @@
   .card{
     background: var(--paper);
     border-radius: 14px;
-    padding: 14px 14px 18px;
+    padding: 0 0 0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.07);
     position: relative;
     overflow: hidden;
   }
-
-  /* Decorative top/bottom borders — original geometric pattern */
-  .deco{
-    height: 22px;
-    display:flex;
-    justify-content: space-around;
-    align-items:flex-end;
-    padding: 0 4px;
-    overflow:hidden;
+  .card > .form,
+  .card > .title,
+  .card > .edit-hint,
+  .card > .chart-wrap{
+    padding-left: 14px;
+    padding-right: 14px;
   }
-  .deco.bottom{ align-items: flex-start; transform: scaleY(-1); }
-  .deco i{ display:inline-block; }
-  .d-arc{ width:14px; height:7px; border-radius: 14px 14px 0 0; }
-  .d-dot{ width:8px; height:8px; border-radius:50%; }
-  .d-half{ width:14px; height:7px; border-radius: 14px 14px 0 0; }
-  .d-leaf{ width:10px; height:14px; border-radius: 50% 50% 0 50%; transform: rotate(-30deg); }
-  .d-tri{ width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom: 9px solid; }
+  .card > .title{ padding-top: 8px; margin: 0; }
+  .card > .form{ padding-bottom: 18px; }
+
+  /* Decorative top/bottom borders — brand images */
+  .deco-img{
+    width: 100%;
+    display: block;
+    line-height: 0;
+  }
+  .deco-img img{
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .deco-img.top img{ border-radius: 14px 14px 0 0; }
+  .deco-img.bottom img{ border-radius: 0 0 14px 14px; }
+
 
   .title{
     font-family:'Patrick Hand', cursive;
@@ -567,21 +574,8 @@
   <div class="app">
     <div class="card" id="card">
       <!-- Decorative top -->
-      <div class="deco top" aria-hidden="true">
-        <i class="d-arc" style="background:var(--coral)"></i>
-        <i class="d-dot" style="background:var(--mint)"></i>
-        <i class="d-leaf" style="background:var(--coral-soft)"></i>
-        <i class="d-half" style="background:var(--mint-soft)"></i>
-        <i class="d-tri" style="border-bottom-color: var(--coral)"></i>
-        <i class="d-dot" style="background:var(--sand)"></i>
-        <i class="d-arc" style="background:var(--mint-dark)"></i>
-        <i class="d-leaf" style="background:var(--coral)"></i>
-        <i class="d-half" style="background:var(--mint)"></i>
-        <i class="d-dot" style="background:var(--coral-soft)"></i>
-        <i class="d-arc" style="background:var(--mint-soft)"></i>
-        <i class="d-tri" style="border-bottom-color: var(--mint)"></i>
-        <i class="d-leaf" style="background:var(--coral-dark)"></i>
-        <i class="d-dot" style="background:var(--mint-dark)"></i>
+      <div class="deco-img top" aria-hidden="true">
+        <img src="RUEDA DE LA VIDA DEL PERRO creciendoentreperros.com_20260509_204221_0000.png" alt="" />
       </div>
 
       <h1 class="title">
@@ -615,21 +609,8 @@
       </div>
 
       <!-- Decorative bottom -->
-      <div class="deco bottom" aria-hidden="true">
-        <i class="d-leaf" style="background:var(--mint-dark)"></i>
-        <i class="d-dot" style="background:var(--coral)"></i>
-        <i class="d-arc" style="background:var(--mint)"></i>
-        <i class="d-tri" style="border-bottom-color: var(--coral-dark)"></i>
-        <i class="d-half" style="background:var(--coral-soft)"></i>
-        <i class="d-dot" style="background:var(--mint-dark)"></i>
-        <i class="d-leaf" style="background:var(--mint)"></i>
-        <i class="d-arc" style="background:var(--coral)"></i>
-        <i class="d-half" style="background:var(--sand)"></i>
-        <i class="d-tri" style="border-bottom-color: var(--mint-dark)"></i>
-        <i class="d-dot" style="background:var(--coral-soft)"></i>
-        <i class="d-leaf" style="background:var(--coral)"></i>
-        <i class="d-arc" style="background:var(--mint-soft)"></i>
-        <i class="d-dot" style="background:var(--mint)"></i>
+      <div class="deco-img bottom" aria-hidden="true">
+        <img src="RUEDA DE LA VIDA DEL PERRO creciendoentreperros.com_20260509_204138_0000.png" alt="" />
       </div>
     </div>
   </div>
